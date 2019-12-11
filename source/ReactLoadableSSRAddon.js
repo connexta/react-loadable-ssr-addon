@@ -32,7 +32,10 @@ class ReactLoadableSSRAddon {
    */
   constructor(options = defaultOptions) {
     this.options = { ...defaultOptions, ...options };
-    console.log(this.options);
+    console.log(this.options.newOption);
+    console.log(this.options.newOption);
+    console.log(this.options.newOption);
+    console.log(this.options.newOption);
     this.compiler = null;
     this.stats = null;
     this.entrypoints = new Set();
