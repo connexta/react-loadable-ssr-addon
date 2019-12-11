@@ -327,7 +327,8 @@ class ReactLoadableSSRAddon {
       }
     }
 
-    fs.writeFileSync(filePath, json);
+    console.log("About to write to filesystem!")
+    fs.writeFileSync(filePath+".test", json);
   }
 }
 
