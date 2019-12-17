@@ -4,7 +4,6 @@
  * @version 0.2.0
  */
 
-import fs from "fs";
 import path from "path";
 import url from "url";
 import { getFileExtension, computeIntegrity, hasEntry } from "./utils";
@@ -349,17 +348,18 @@ class ReactLoadableSSRAddon {
     const fileDir = path.dirname(filePath);
     const json = JSON.stringify(this.manifest, null, 2);
     try {
-      if (!fs.existsSync(fileDir)) {
-        fs.mkdirSync(fileDir);
+      if (!this.compiler.outputFileSystem.existsSync(fileDir)) {
+        this.compiler.outputFileSystem.mkdirSync(fileDir);
       }
     } catch (err) {
+      console.log("Err writing to disk");
       if (err.code !== "EEXIST") {
         throw err;
       }
     }
 
     console.log("About to write to filesystem!");
-    fs.writeFileSync(filePath + ".test", json);
+    this.compiler.outputFileSystem.writeFileSync(filePath + ".test", json);
   }
 }
 
