@@ -343,9 +343,7 @@ class ReactLoadableSSRAddon {
     const fileDir = path.dirname(this.options.filename);
     const json = JSON.stringify(this.manifest, null, 2);
     try {
-      if (!this.compiler.outputFileSystem.existsSync(fileDir)) {
-        this.mkDirByPathSync(fileDir, this.compiler.outputFileSystem);
-      }
+      this.mkDirByPathSync(fileDir, this.compiler.outputFileSystem);
     } catch (err) {
       console.error(err);
       if (err.code !== "EEXIST") {
@@ -353,7 +351,11 @@ class ReactLoadableSSRAddon {
       }
     }
 
-    this.compiler.outputFileSystem.writeFileSync(this.options.filename, json);
+    this.compiler.outputFileSystem.writeFile(
+      this.options.filename,
+      json,
+      () => {}
+    );
   }
 
   /**
@@ -368,7 +370,7 @@ class ReactLoadableSSRAddon {
     return targetDir.split(sep).reduce((parentDir, childDir) => {
       const curDir = path.resolve(baseDir, parentDir, childDir);
       try {
-        fs.mkdirSync(curDir);
+        fs.mkdir(curDir, () => {});
       } catch (err) {
         if (err.code === "EEXIST") {
           // curDir already exists!
