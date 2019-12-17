@@ -31,10 +31,6 @@ class ReactLoadableSSRAddon {
    */
   constructor(options = defaultOptions) {
     this.options = { ...defaultOptions, ...options };
-    console.log(this.options.newOption);
-    console.log(this.options.newOption);
-    console.log(this.options.newOption);
-    console.log(this.options.newOption);
     this.compiler = null;
     this.stats = null;
     this.entrypoints = new Set();
@@ -344,22 +340,20 @@ class ReactLoadableSSRAddon {
    * @method writeAssetsFile
    */
   writeAssetsFile() {
-    const filePath = this.manifestOutputPath;
-    const fileDir = path.dirname(filePath);
+    const fileDir = path.dirname(this.options.filename);
     const json = JSON.stringify(this.manifest, null, 2);
     try {
       if (!this.compiler.outputFileSystem.existsSync(fileDir)) {
         this.compiler.outputFileSystem.mkdirSync(fileDir);
       }
     } catch (err) {
-      console.log("Err writing to disk");
+      console.error(err);
       if (err.code !== "EEXIST") {
         throw err;
       }
     }
 
-    console.log("About to write to filesystem!");
-    this.compiler.outputFileSystem.writeFileSync(filePath + ".test", json);
+    this.compiler.outputFileSystem.writeFileSync(this.options.filename, json);
   }
 }
 
