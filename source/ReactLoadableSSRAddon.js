@@ -4,20 +4,19 @@
  * @version 0.2.0
  */
 
-import fs from 'fs';
-import path from 'path';
-import url from 'url';
-import { getFileExtension, computeIntegrity, hasEntry } from './utils';
+import path from "path";
+import url from "url";
+import { getFileExtension, computeIntegrity, hasEntry } from "./utils";
 
 // Webpack plugin name
-const PLUGIN_NAME = 'ReactLoadableSSRAddon';
+const PLUGIN_NAME = "ReactLoadableSSRAddon";
 
 // Default plugin options
 const defaultOptions = {
-  filename: 'assets-manifest.json',
+  filename: "assets-manifest.json",
   integrity: false,
-  integrityAlgorithms: ['sha256', 'sha384', 'sha512'],
-  integrityPropertyName: 'integrity',
+  integrityAlgorithms: ["sha256", "sha384", "sha512"],
+  integrityPropertyName: "integrity"
 };
 
 /**
@@ -46,11 +45,18 @@ class ReactLoadableSSRAddon {
    * @returns {boolean} - True or False
    */
   get isRequestFromDevServer() {
-    if (process.argv.some((arg) => arg.includes('webpack-dev-server'))) { return true; }
+    if (process.argv.some(arg => arg.includes("webpack-dev-server"))) {
+      return true;
+    }
 
-    const { outputFileSystem, outputFileSystem: { constructor: { name } } } = this.compiler;
+    const {
+      outputFileSystem,
+      outputFileSystem: {
+        constructor: { name }
+      }
+    } = this.compiler;
 
-    return outputFileSystem && name === 'MemoryFileSystem';
+    return outputFileSystem && name === "MemoryFileSystem";
   }
 
   /**
@@ -65,13 +71,18 @@ class ReactLoadableSSRAddon {
       return filename;
     }
 
-    const { outputPath, options: { devServer } } = this.compiler;
+    const {
+      outputPath,
+      options: { devServer }
+    } = this.compiler;
 
     if (this.isRequestFromDevServer && devServer) {
-      let devOutputPath = (devServer.outputPath || outputPath || '/');
+      let devOutputPath = devServer.outputPath || outputPath || "/";
 
-      if (devOutputPath === '/') {
-        console.warn('Please use an absolute path in options.output when using webpack-dev-server.');
+      if (devOutputPath === "/") {
+        console.warn(
+          "Please use an absolute path in options.output when using webpack-dev-server."
+        );
         devOutputPath = this.compiler.context || process.cwd();
       }
 
@@ -90,15 +101,16 @@ class ReactLoadableSSRAddon {
   getAssets(assetsChunk) {
     for (let i = 0; i < assetsChunk.length; i += 1) {
       const chunk = assetsChunk[i];
-      const {
-        id, files, siblings = [], hash,
-      } = chunk;
+      const { id, files, siblings = [], hash } = chunk;
 
       const keys = this.getChunkOrigin(chunk);
 
       for (let j = 0; j < keys.length; j += 1) {
         this.assetsByName.set(keys[j], {
-          id, files, hash, siblings,
+          id,
+          files,
+          hash,
+          siblings
         });
       }
     }
@@ -140,13 +152,15 @@ class ReactLoadableSSRAddon {
         const userRequest = reason.dependency
           ? reason.dependency.userRequest
           : null;
-        if (type === 'import()') {
+        if (type === "import()") {
           origins.add(userRequest);
         }
       }
     }
 
-    if (origins.size === 0) { return [names[0] || id]; }
+    if (origins.size === 0) {
+      return [names[0] || id];
+    }
     if (this.entrypoints.has(names[0])) {
       origins.add(names[0]);
     }
@@ -170,7 +184,7 @@ class ReactLoadableSSRAddon {
     if (compiler.hooks) {
       compiler.hooks.emit.tapAsync(PLUGIN_NAME, this.handleEmit.bind(this));
     } else {
-      compiler.plugin('emit', this.handleEmit.bind(this));
+      compiler.plugin("emit", this.handleEmit.bind(this));
     }
   }
 
@@ -192,7 +206,7 @@ class ReactLoadableSSRAddon {
       return 0;
     };
 
-    return compilationChunks.map((chunk) => {
+    return compilationChunks.map(chunk => {
       const siblings = new Set();
 
       if (chunk.groupsIterable) {
@@ -214,7 +228,7 @@ class ReactLoadableSSRAddon {
         files: chunk.files.slice(),
         hash: chunk.renderedHash,
         siblings: Array.from(siblings).sort(compareId),
-        modules: chunk.getModules(),
+        modules: chunk.getModules()
       };
     });
   }
@@ -229,14 +243,17 @@ class ReactLoadableSSRAddon {
    * @param {function} callback
    */
   handleEmit(compilation, callback) {
-    this.stats = compilation.getStats().toJson({
-      all: false,
-      entrypoints: true,
-    }, true);
-    this.options.publicPath = (compilation.outputOptions
-      ? compilation.outputOptions.publicPath
-      : compilation.options.output.publicPath)
-      || '';
+    this.stats = compilation.getStats().toJson(
+      {
+        all: false,
+        entrypoints: true
+      },
+      true
+    );
+    this.options.publicPath =
+      (compilation.outputOptions
+        ? compilation.outputOptions.publicPath
+        : compilation.options.output.publicPath) || "";
     this.getEntrypoints(this.stats.entrypoints);
 
     this.getAssets(this.getMinimalStatsChunks(compilation.chunks));
@@ -260,7 +277,9 @@ class ReactLoadableSSRAddon {
     this.assetsByName.forEach((value, key) => {
       const { files, id, siblings, hash } = value;
 
-      if (!origins[key]) { origins[key] = []; }
+      if (!origins[key]) {
+        origins[key] = [];
+      }
 
       siblings.push(id);
 
@@ -274,28 +293,35 @@ class ReactLoadableSSRAddon {
       for (let i = 0; i < files.length; i += 1) {
         const file = files[i];
         const currentAsset = originAssets[file] || {};
-        const ext = getFileExtension(file).replace(/^\.+/, '').toLowerCase();
+        const ext = getFileExtension(file)
+          .replace(/^\.+/, "")
+          .toLowerCase();
 
-        if (!assets[id]) { assets[id] = {}; }
-        if (!assets[id][ext]) { assets[id][ext] = []; }
+        if (!assets[id]) {
+          assets[id] = {};
+        }
+        if (!assets[id][ext]) {
+          assets[id][ext] = [];
+        }
 
-        if (!hasEntry(assets[id][ext], 'file', file)) {
-          const shouldComputeIntegrity = Object.keys(currentAsset)
-            && this.options.integrity
-            && !currentAsset[this.options.integrityPropertyName];
+        if (!hasEntry(assets[id][ext], "file", file)) {
+          const shouldComputeIntegrity =
+            Object.keys(currentAsset) &&
+            this.options.integrity &&
+            !currentAsset[this.options.integrityPropertyName];
 
           if (shouldComputeIntegrity) {
             currentAsset[this.options.integrityPropertyName] = computeIntegrity(
               this.options.integrityAlgorithms,
-              currentAsset.source(),
+              currentAsset.source()
             );
           }
 
           assets[id][ext].push({
             file,
             hash,
-            publicPath: url.resolve(this.options.publicPath || '', file),
-            integrity: currentAsset[this.options.integrityPropertyName],
+            publicPath: url.resolve(this.options.publicPath || "", file),
+            integrity: currentAsset[this.options.integrityPropertyName]
           });
         }
       }
@@ -305,7 +331,7 @@ class ReactLoadableSSRAddon {
     this.manifest = {
       entrypoints: Array.from(entrypoints),
       origins,
-      assets,
+      assets
     };
   }
 
@@ -314,20 +340,57 @@ class ReactLoadableSSRAddon {
    * @method writeAssetsFile
    */
   writeAssetsFile() {
-    const filePath = this.manifestOutputPath;
-    const fileDir = path.dirname(filePath);
+    const fileDir = path.dirname(this.options.filename);
     const json = JSON.stringify(this.manifest, null, 2);
     try {
-      if (!fs.existsSync(fileDir)) {
-        fs.mkdirSync(fileDir);
-      }
+      this.mkDirByPathSync(fileDir, this.compiler.outputFileSystem);
     } catch (err) {
-      if (err.code !== 'EEXIST') {
+      console.error(err);
+      if (err.code !== "EEXIST") {
         throw err;
       }
     }
 
-    fs.writeFileSync(filePath, json);
+    this.compiler.outputFileSystem.writeFile(
+      this.options.filename,
+      json,
+      () => {}
+    );
+  }
+
+  /**
+   * Write directory structure recursively
+   * @method mkDirByPathSync
+   */
+  mkDirByPathSync(targetDir, fs, { isRelativeToScript = false } = {}) {
+    const sep = path.sep;
+    const initDir = path.isAbsolute(targetDir) ? sep : "";
+    const baseDir = isRelativeToScript ? __dirname : ".";
+
+    return targetDir.split(sep).reduce((parentDir, childDir) => {
+      const curDir = path.resolve(baseDir, parentDir, childDir);
+      try {
+        fs.mkdir(curDir, () => {});
+      } catch (err) {
+        if (err.code === "EEXIST") {
+          // curDir already exists!
+          return curDir;
+        }
+
+        // To avoid `EISDIR` error on Mac and `EACCES`-->`ENOENT` and `EPERM` on Windows.
+        if (err.code === "ENOENT") {
+          // Throw the original parentDir error on curDir `ENOENT` failure.
+          throw new Error(`EACCES: permission denied, mkdir '${parentDir}'`);
+        }
+
+        const caughtErr = ["EACCES", "EPERM", "EISDIR"].indexOf(err.code) > -1;
+        if (!caughtErr || (caughtErr && curDir === path.resolve(targetDir))) {
+          throw err; // Throw if it's just the last created dir.
+        }
+      }
+
+      return curDir;
+    }, initDir);
   }
 }
 
