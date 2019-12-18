@@ -5,5 +5,6 @@ react-loadable-ssr-addon is authored by:
 * Marcos Gonçalves <contact@themgoncalves.com>
 * Ngoc Phuong <nguyenngocphuongnb@gmail.com>
 * Phuong Nguyen <nguyenngocphuongnb@gmail.com>
+* Ryan Schachte <code@ryan-schachte.com>
 * dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 * endiliey <endiliey@gmail.com>

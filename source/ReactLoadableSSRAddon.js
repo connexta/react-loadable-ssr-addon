@@ -258,9 +258,7 @@ class ReactLoadableSSRAddon {
 
     this.getAssets(this.getMinimalStatsChunks(compilation.chunks));
     this.processAssets(compilation.assets);
-    this.writeAssetsFile();
-
-    callback();
+    this.writeAssetsFile(callback);
   }
 
   /**
@@ -339,58 +337,28 @@ class ReactLoadableSSRAddon {
    * Write Assets Manifest file
    * @method writeAssetsFile
    */
-  writeAssetsFile() {
+  writeAssetsFile(callback) {
     const fileDir = path.dirname(this.options.filename);
-    const json = JSON.stringify(this.manifest, null, 2);
+    const fs = this.compiler.outputFileSystem;
+    const mkdirp = fs.mkdirp.sync ? fs.mkdirp.sync : fs.mkdirpSync;
+    var json = JSON.stringify(this.manifest, null, 2);
+
     try {
-      this.mkDirByPathSync(fileDir, this.compiler.outputFileSystem);
+      mkdirp.bind(fs)(fileDir);
     } catch (err) {
       console.error(err);
+
       if (err.code !== "EEXIST") {
         throw err;
       }
     }
 
+    console.log("Writing file: " + this.options.filename);
     this.compiler.outputFileSystem.writeFile(
       this.options.filename,
       json,
-      () => {}
+      callback
     );
-  }
-
-  /**
-   * Write directory structure recursively
-   * @method mkDirByPathSync
-   */
-  mkDirByPathSync(targetDir, fs, { isRelativeToScript = false } = {}) {
-    const sep = path.sep;
-    const initDir = path.isAbsolute(targetDir) ? sep : "";
-    const baseDir = isRelativeToScript ? __dirname : ".";
-
-    return targetDir.split(sep).reduce((parentDir, childDir) => {
-      const curDir = path.resolve(baseDir, parentDir, childDir);
-      try {
-        fs.mkdir(curDir, () => {});
-      } catch (err) {
-        if (err.code === "EEXIST") {
-          // curDir already exists!
-          return curDir;
-        }
-
-        // To avoid `EISDIR` error on Mac and `EACCES`-->`ENOENT` and `EPERM` on Windows.
-        if (err.code === "ENOENT") {
-          // Throw the original parentDir error on curDir `ENOENT` failure.
-          throw new Error(`EACCES: permission denied, mkdir '${parentDir}'`);
-        }
-
-        const caughtErr = ["EACCES", "EPERM", "EISDIR"].indexOf(err.code) > -1;
-        if (!caughtErr || (caughtErr && curDir === path.resolve(targetDir))) {
-          throw err; // Throw if it's just the last created dir.
-        }
-      }
-
-      return curDir;
-    }, initDir);
   }
 }
 
