@@ -23,7 +23,7 @@
   },
   "scripts": {
     "authors": "echo 'react-loadable-ssr-addon is authored by: \n' > AUTHORS.md | git log --format='* %aN <%aE>' | sort -u >> AUTHORS.md",
-    "prepare": "npm run build && npm run authors",
+    "do:prepare": "npm run build && npm run authors",
     "prepublishOnly": "npm test && npm run lint",
     "preversion": "npm run lint",
     "postversion": "git push && git push --tags",
